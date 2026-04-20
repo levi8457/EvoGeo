@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 数据库
+  postgres:
+    image: postgres:15-alpine
+    container_name: evogeo-postgres
+    environment:
+      POSTGRES_USER: evogeo
+      POSTGRES_PASSWORD: evogeo_password
+      POSTGRES_DB: evogeo
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U evogeo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ChromaDB 向量数据库
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: evogeo-chromadb
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis 缓存（可选）
+  redis:
+    image: redis:7-alpine
+    container_name: evogeo-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 后端 API 服务
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: evogeo-backend
+    environment:
+      NODE_ENV: production
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: evogeo
+      DB_PASSWORD: evogeo_password
+      DB_DATABASE: evogeo
+      CHROMADB_URL: http://chromadb:8000
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      chromadb:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # 前端 Web 服务
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: evogeo-frontend
+    environment:
+      VITE_API_BASE_URL: http://localhost:3000/api
+    ports:
+      - "5174:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  chroma_data:
+  redis_data:
