@@ -260,4 +260,67 @@ export class OptimizationStrategyService {
     const fitness = Math.max(0, 1 - (error / maxError));
     return fitness;
   }
+
+  async getArchiveData(brandId: string, dimension1?: string, dimension2?: string) {
+    const query = this.strategyRepo.createQueryBuilder('strategy')
+      .where('strategy.brandId = :brandId', { brandId });
+
+    if (dimension1) {
+      query.andWhere('strategy.archiveDimension1 = :dimension1', { dimension1 });
+    }
+
+    if (dimension2) {
+      query.andWhere('strategy.archiveDimension2 = :dimension2', { dimension2 });
+    }
+
+    const strategies = await query.orderBy('strategy.fitnessScore', 'DESC').getMany();
+
+    const archiveGrid: Record<string, Record<string, any[]>> = {};
+    strategies.forEach(strategy => {
+      const dim1 = strategy.archiveDimension1 || 'unknown';
+      const dim2 = strategy.archiveDimension2 || 'unknown';
+      if (!archiveGrid[dim1]) archiveGrid[dim1] = {};
+      if (!archiveGrid[dim1][dim2]) archiveGrid[dim1][dim2] = [];
+      archiveGrid[dim1][dim2].push(strategy);
+    });
+
+    return {
+      archive: archiveGrid,
+      totalStrategies: strategies.length,
+    };
+  }
+
+  async getArchiveStatistics(brandId: string) {
+    const strategies = await this.strategyRepo.find({ where: { brandId } });
+
+    const dimension1Values = new Set<string>();
+    const dimension2Values = new Set<string>();
+    const fitnessByDimension: Record<string, Record<string, { count: number; avgFitness: number }>> = {};
+
+    strategies.forEach(strategy => {
+      const dim1 = strategy.archiveDimension1 || 'unknown';
+      const dim2 = strategy.archiveDimension2 || 'unknown';
+
+      dimension1Values.add(dim1);
+      dimension2Values.add(dim2);
+
+      if (!fitnessByDimension[dim1]) fitnessByDimension[dim1] = {};
+      if (!fitnessByDimension[dim1][dim2]) {
+        fitnessByDimension[dim1][dim2] = { count: 0, avgFitness: 0 };
+      }
+
+      const current = fitnessByDimension[dim1][dim2];
+      current.avgFitness = (current.avgFitness * current.count + strategy.fitnessScore) / (current.count + 1);
+      current.count++;
+    });
+
+    return {
+      dimension1Values: Array.from(dimension1Values),
+      dimension2Values: Array.from(dimension2Values),
+      totalCells: dimension1Values.size * dimension2Values.size,
+      filledCells: Object.values(fitnessByDimension).reduce((acc, dim2) => acc + Object.keys(dim2).length, 0),
+      fitnessByDimension,
+      totalStrategies: strategies.length,
+    };
+  }
 }

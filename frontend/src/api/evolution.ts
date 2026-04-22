@@ -139,8 +139,23 @@ export const EvolutionService = {
     const params = new URLSearchParams();
     if (strategyId) params.append('strategyId', strategyId);
     if (timeRange) params.append('timeRange', timeRange);
-    
+
     const response = await axios.get(`${API_BASE_URL}/critic/stats`, { params });
+    return response.data;
+  },
+
+  async getArchiveData(brandId: string, dimension1?: string, dimension2?: string): Promise<any> {
+    const params = new URLSearchParams();
+    params.append('brandId', brandId);
+    if (dimension1) params.append('dimension1', dimension1);
+    if (dimension2) params.append('dimension2', dimension2);
+
+    const response = await axios.get(`${API_BASE_URL}/archive`, { params });
+    return response.data;
+  },
+
+  async getArchiveStatistics(brandId: string): Promise<any> {
+    const response = await axios.get(`${API_BASE_URL}/archive/statistics?brandId=${brandId}`);
     return response.data;
   },
 };

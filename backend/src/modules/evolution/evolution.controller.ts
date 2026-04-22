@@ -119,4 +119,18 @@ export class EvolutionController {
   ) {
     return this.criticService.getStats(strategyId, timeRange);
   }
+
+  @Get('archive')
+  async getArchiveData(
+    @Query('brandId') brandId: string,
+    @Query('dimension1') dimension1?: string,
+    @Query('dimension2') dimension2?: string,
+  ) {
+    return this.strategyService.getArchiveData(brandId, dimension1, dimension2);
+  }
+
+  @Get('archive/statistics')
+  async getArchiveStatistics(@Query('brandId') brandId: string) {
+    return this.strategyService.getArchiveStatistics(brandId);
+  }
 }
