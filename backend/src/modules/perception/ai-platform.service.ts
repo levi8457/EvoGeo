@@ -335,7 +335,7 @@ export class AiPlatformService {
     }
   }
 
-  getSupportedPlatforms(): string[] {
+  async getSupportedPlatforms(): Promise<string[]> {
     return Object.keys(PLATFORM_CONFIGS);
   }
 }

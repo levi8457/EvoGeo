@@ -100,7 +100,7 @@ export const perceptionApi = {
     const response = await api.get('/perception/dashboard', {
       params: filters
     })
-    return response.data
+    return response.data.data
   },
 
   async getVisibilityRecords(
@@ -111,7 +111,7 @@ export const perceptionApi = {
     const response = await api.get('/perception/visibility-records', {
       params: { brandId, startDate, endDate }
     })
-    return response.data
+    return response.data.data
   },
 
   async runImmediateCheck(queryId: string, platforms: string[]): Promise<{
@@ -125,7 +125,7 @@ export const perceptionApi = {
       queryId,
       platforms
     })
-    return response.data
+    return response.data.data
   },
 
   async getCompetitorAnalysis(brandId: string, queryId?: string): Promise<{
@@ -138,22 +138,22 @@ export const perceptionApi = {
     const response = await api.get('/perception/competitor-analysis', {
       params: { brandId, queryId }
     })
-    return response.data
+    return response.data.data
   },
 
   async getSupportedPlatforms(): Promise<{ platforms: string[] }> {
     const response = await api.get('/perception/platforms')
-    return response.data
+    return response.data.data
   },
 
   async getEnabledPlatforms(): Promise<any[]> {
     const response = await api.get('/perception/platforms/enabled')
-    return response.data
+    return response.data.data
   },
 
   async testPlatformConnection(name: string): Promise<{ success: boolean; message: string }> {
     const response = await api.get(`/perception/platforms/${name}/test`)
-    return response.data
+    return response.data.data
   },
 
   async triggerScan(brandName: string, query: string): Promise<any> {
@@ -161,43 +161,43 @@ export const perceptionApi = {
       brandName,
       query
     }, { timeout: 60000 })
-    return response.data
+    return response.data.data
   },
 
   async seedHistoricalData(): Promise<{ message: string }> {
     const response = await api.get('/perception/seed-history')
-    return response.data
+    return response.data.data
   },
 
   async getBrands(): Promise<Brand[]> {
     const response = await api.get('/perception/brands')
-    return response.data
+    return response.data.data
   },
 
   async getQueries(brandId?: string): Promise<any[]> {
     const response = await api.get('/perception/queries', {
       params: { brandId }
     })
-    return response.data
+    return response.data.data
   },
 
   async getQueryById(id: string): Promise<any> {
     const response = await api.get(`/perception/queries/${id}`)
-    return response.data
+    return response.data.data
   },
 
   async createQuery(data: { brandId: string; queryText: string; category?: string; priority?: number }): Promise<MonitoringQuery> {
     const response = await api.post('/perception/queries', data)
-    return response.data
+    return response.data.data
   },
 
   async updateQuery(id: string, data: { queryText?: string; category?: string; priority?: number; isActive?: boolean }): Promise<MonitoringQuery> {
     const response = await api.put(`/perception/queries/${id}`, data)
-    return response.data
+    return response.data.data
   },
 
   async deleteQuery(id: string): Promise<{ message: string }> {
     const response = await api.delete(`/perception/queries/${id}`)
-    return response.data
+    return response.data.data
   }
 }

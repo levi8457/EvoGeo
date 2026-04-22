@@ -101,7 +101,7 @@ export class PerceptionController {
   @Get('platforms')
   async getSupportedPlatforms() {
     return {
-      platforms: this.aiPlatformService.getSupportedPlatforms(),
+      platforms: await this.aiPlatformService.getSupportedPlatforms(),
     };
   }
 
