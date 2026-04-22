@@ -160,6 +160,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { Refresh } from '@element-plus/icons-vue';
 import { EvolutionService } from '../api/evolution';
+import { perceptionApi } from '../api/perception';
 import VChart from 'vue-echarts';
 import { use } from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
@@ -193,7 +194,7 @@ const router = useRouter();
 const loading = ref(false);
 const selectedBrand = ref('');
 const timeRange = ref('30');
-const brands = ref<any[]>([]);
+const brands = ref<Array<{id: string; name: string}>>([]);
 const dashboardData = ref<any>({});
 
 const evolutionTrendOption = computed(() => {
@@ -358,11 +359,8 @@ const getFitnessColor = (fitness: number) => {
 
 const loadBrands = async () => {
   try {
-    // 暂时使用模拟数据，后续从 API 获取
-    brands.value = [
-      { id: '123e4567-e89b-12d3-a456-426614174000', name: 'AI副班' },
-      { id: '234e5678-f90c-23d4-b567-537725285111', name: 'AI助教' },
-    ];
+    const data = await perceptionApi.getBrands();
+    brands.value = data || [];
     if (brands.value.length > 0 && !selectedBrand.value) {
       selectedBrand.value = brands.value[0].id;
     }
