@@ -126,6 +126,7 @@ use([
   CanvasRenderer,
 ]);
 import { GenerationService } from '../api/generation';
+import { perceptionApi } from '../api/perception';
 
 interface TrendItem {
   date: string;
@@ -144,10 +145,7 @@ interface DashboardData {
 }
 
 const selectedBrand = ref('');
-const brands = ref([
-  { id: '123e4567-e89b-12d3-a456-426614174000', name: 'AI副班' },
-  { id: '234e5678-f90c-23d4-b567-537725285111', name: 'AI助教' },
-]);
+const brands = ref<Array<{id: string; name: string}>>([]);
 
 const dashboardData = ref<DashboardData>({
   totalGenerated: 0,
@@ -162,10 +160,8 @@ const dashboardData = ref<DashboardData>({
 
 const loadBrands = async () => {
   try {
-    brands.value = [
-      { id: '123e4567-e89b-12d3-a456-426614174000', name: 'AI副班' },
-      { id: '234e5678-f90c-23d4-b567-537725285111', name: 'AI助教' },
-    ];
+    const data = await perceptionApi.getBrands();
+    brands.value = data || [];
     if (brands.value.length > 0 && !selectedBrand.value) {
       selectedBrand.value = brands.value[0].id;
     }

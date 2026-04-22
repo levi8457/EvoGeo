@@ -162,6 +162,7 @@ import { ref, onMounted } from 'vue';
 import { Plus } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 import { MemoryService } from '../api/memory';
+import { perceptionApi } from '../api/perception';
 
 interface MemoryEntry {
   id: string;
@@ -175,10 +176,7 @@ interface MemoryEntry {
 }
 
 const selectedBrand = ref('');
-const brands = ref([
-  { id: '123e4567-e89b-12d3-a456-426614174000', name: 'AI副班' },
-  { id: '234e5678-f90c-23d4-b567-537725285111', name: 'AI助教' },
-]);
+const brands = ref<Array<{id: string; name: string}>>([]);
 
 const filters = ref({
   memoryType: '',
@@ -207,10 +205,8 @@ const currentMemory = ref<MemoryEntry | null>(null);
 
 const loadBrands = async () => {
   try {
-    brands.value = [
-      { id: '123e4567-e89b-12d3-a456-426614174000', name: 'AI副班' },
-      { id: '234e5678-f90c-23d4-b567-537725285111', name: 'AI助教' },
-    ];
+    const data = await perceptionApi.getBrands();
+    brands.value = data || [];
     if (brands.value.length > 0 && !selectedBrand.value) {
       selectedBrand.value = brands.value[0].id;
     }

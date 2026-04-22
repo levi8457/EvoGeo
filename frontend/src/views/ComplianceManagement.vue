@@ -122,13 +122,11 @@ import { ref, onMounted } from 'vue';
 import { ElMessage, ElEmpty } from 'element-plus';
 import { GenerationService } from '../api/generation';
 import { ComplianceService } from '../api/compliance';
+import { perceptionApi } from '../api/perception';
 
 // 响应式数据
 const selectedBrand = ref('');
-const brands = ref([
-  { id: '123e4567-e89b-12d3-a456-426614174000', name: 'AI副班' },
-  { id: '234e5678-f90c-23d4-b567-537725285111', name: 'AI助教' },
-]);
+const brands = ref<Array<{id: string; name: string}>>([]);
 
 const contents = ref<any[]>([]);
 const total = ref(0);
@@ -143,10 +141,8 @@ const currentComplianceChecks = ref<any[]>([]);
 // 加载品牌
 const loadBrands = async () => {
   try {
-    brands.value = [
-      { id: '123e4567-e89b-12d3-a456-426614174000', name: 'AI副班' },
-      { id: '234e5678-f90c-23d4-b567-537725285111', name: 'AI助教' },
-    ];
+    const data = await perceptionApi.getBrands();
+    brands.value = data || [];
     if (brands.value.length > 0 && !selectedBrand.value) {
       selectedBrand.value = brands.value[0].id;
     }

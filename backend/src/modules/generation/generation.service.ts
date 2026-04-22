@@ -212,38 +212,41 @@ export class GenerationService {
 
       const statusResult = await this.contentRepo
         .createQueryBuilder('content')
-        .select('content.status, COUNT(*) as count')
+        .select('content.status', 'status')
+        .addSelect('COUNT(*)', 'count')
         .where('content.brandId = :brandId', { brandId })
         .groupBy('content.status')
         .getRawMany();
 
       const byStatus: Record<string, number> = {};
       statusResult.forEach(item => {
-        byStatus[item.status] = parseInt(item.count, 10);
+        byStatus[item.status || 'unknown'] = parseInt(item.count || '0', 10);
       });
 
       const typeResult = await this.contentRepo
         .createQueryBuilder('content')
-        .select('content.contentType, COUNT(*) as count')
+        .select('content.contentType', 'contentType')
+        .addSelect('COUNT(*)', 'count')
         .where('content.brandId = :brandId', { brandId })
         .groupBy('content.contentType')
         .getRawMany();
 
       const byType: Record<string, number> = {};
       typeResult.forEach(item => {
-        byType[item.contentType] = parseInt(item.count, 10);
+        byType[item.contentType || 'unknown'] = parseInt(item.count || '0', 10);
       });
 
       const platformResult = await this.contentRepo
         .createQueryBuilder('content')
-        .select('content.platform, COUNT(*) as count')
+        .select('content.platform', 'platform')
+        .addSelect('COUNT(*)', 'count')
         .where('content.brandId = :brandId', { brandId })
         .groupBy('content.platform')
         .getRawMany();
 
       const byPlatform: Record<string, number> = {};
       platformResult.forEach(item => {
-        byPlatform[item.platform] = parseInt(item.count, 10);
+        byPlatform[item.platform || 'unknown'] = parseInt(item.count || '0', 10);
       });
 
       return {
