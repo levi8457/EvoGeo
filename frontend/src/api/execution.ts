@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3000/api/execution';
+const API_BASE_URL = '/api/execution';
 
 export class ExecutionService {
   /**
@@ -11,7 +11,7 @@ export class ExecutionService {
   static async deployContent(contentId: string) {
     try {
       const response = await axios.post(`${API_BASE_URL}/deploy/${contentId}`);
-      return response.data;
+      return response.data.data;
     } catch (error) {
       console.error('部署内容失败:', error);
       throw error;
@@ -26,7 +26,7 @@ export class ExecutionService {
   static async batchDeployContent(contentIds: string[]) {
     try {
       const response = await axios.post(`${API_BASE_URL}/deploy/batch`, { contentIds });
-      return response.data;
+      return response.data.data;
     } catch (error) {
       console.error('批量部署内容失败:', error);
       throw error;
@@ -42,7 +42,7 @@ export class ExecutionService {
   static async updateDeploymentStatus(contentId: string, status: string) {
     try {
       const response = await axios.put(`${API_BASE_URL}/status/${contentId}`, { status });
-      return response.data;
+      return response.data.data;
     } catch (error) {
       console.error('更新部署状态失败:', error);
       throw error;
@@ -57,7 +57,7 @@ export class ExecutionService {
   static async getDeploymentStatistics(brandId: string) {
     try {
       const response = await axios.get(`${API_BASE_URL}/statistics`, { params: { brandId } });
-      return response.data;
+      return response.data.data;
     } catch (error) {
       console.error('获取部署统计失败:', error);
       throw error;
@@ -72,7 +72,7 @@ export class ExecutionService {
   static async getDeploymentHistory(contentId: string) {
     try {
       const response = await axios.get(`${API_BASE_URL}/history/${contentId}`);
-      return response.data;
+      return response.data.data;
     } catch (error) {
       console.error('获取部署历史失败:', error);
       throw error;

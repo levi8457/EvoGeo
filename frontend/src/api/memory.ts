@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3000/api/memory';
+const API_BASE_URL = '/api/memory';
 
 export class MemoryService {
   /**
@@ -18,7 +18,7 @@ export class MemoryService {
   }) {
     try {
       const response = await axios.post(`${API_BASE_URL}/entries`, data);
-      return response.data;
+      return response.data.data;
     } catch (error) {
       console.error('创建记忆条目失败:', error);
       throw error;
@@ -37,7 +37,7 @@ export class MemoryService {
   }) {
     try {
       const response = await axios.get(`${API_BASE_URL}/entries`, { params });
-      return response.data;
+      return response.data.data;
     } catch (error) {
       console.error('获取记忆条目列表失败:', error);
       throw error;
@@ -52,7 +52,7 @@ export class MemoryService {
   static async getMemoryEntryById(id: string) {
     try {
       const response = await axios.get(`${API_BASE_URL}/entries/${id}`);
-      return response.data;
+      return response.data.data;
     } catch (error) {
       console.error('获取记忆条目详情失败:', error);
       throw error;
@@ -70,7 +70,7 @@ export class MemoryService {
       const response = await axios.get(`${API_BASE_URL}/entries/by-key`, {
         params: { brandId, memoryKey },
       });
-      return response.data;
+      return response.data.data;
     } catch (error) {
       console.error('根据键获取记忆条目失败:', error);
       throw error;
@@ -90,7 +90,7 @@ export class MemoryService {
   }) {
     try {
       const response = await axios.put(`${API_BASE_URL}/entries/${id}`, data);
-      return response.data;
+      return response.data.data;
     } catch (error) {
       console.error('更新记忆条目失败:', error);
       throw error;
@@ -105,7 +105,7 @@ export class MemoryService {
   static async deleteMemoryEntry(id: string) {
     try {
       const response = await axios.delete(`${API_BASE_URL}/entries/${id}`);
-      return response.data;
+      return response.data.data;
     } catch (error) {
       console.error('删除记忆条目失败:', error);
       throw error;
@@ -120,7 +120,7 @@ export class MemoryService {
   static async getMemoryStatistics(brandId: string) {
     try {
       const response = await axios.get(`${API_BASE_URL}/statistics`, { params: { brandId } });
-      return response.data;
+      return response.data.data;
     } catch (error) {
       console.error('获取记忆统计信息失败:', error);
       throw error;

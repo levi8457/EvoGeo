@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3000/api/generation';
+const API_BASE_URL = '/api/generation';
 
 export class GenerationService {
   /**
@@ -17,7 +17,7 @@ export class GenerationService {
   }) {
     try {
       const response = await axios.post(`${API_BASE_URL}/content`, data);
-      return response.data;
+      return response.data.data;
     } catch (error) {
       console.error('生成内容失败:', error);
       throw error;
@@ -37,7 +37,7 @@ export class GenerationService {
   }) {
     try {
       const response = await axios.get(`${API_BASE_URL}/contents`, { params });
-      return response.data;
+      return response.data.data;
     } catch (error) {
       console.error('获取生成内容列表失败:', error);
       throw error;
@@ -52,7 +52,7 @@ export class GenerationService {
   static async getGeneratedContentById(id: string) {
     try {
       const response = await axios.get(`${API_BASE_URL}/contents/${id}`);
-      return response.data;
+      return response.data.data;
     } catch (error) {
       console.error('获取内容详情失败:', error);
       throw error;
@@ -68,7 +68,7 @@ export class GenerationService {
   static async updateContentStatus(id: string, status: string) {
     try {
       const response = await axios.put(`${API_BASE_URL}/contents/${id}/status`, { status });
-      return response.data;
+      return response.data.data;
     } catch (error) {
       console.error('更新内容状态失败:', error);
       throw error;
@@ -83,7 +83,7 @@ export class GenerationService {
   static async deleteGeneratedContent(id: string) {
     try {
       const response = await axios.delete(`${API_BASE_URL}/contents/${id}`);
-      return response.data;
+      return response.data.data;
     } catch (error) {
       console.error('删除内容失败:', error);
       throw error;
@@ -98,7 +98,7 @@ export class GenerationService {
   static async getContentStatistics(brandId: string) {
     try {
       const response = await axios.get(`${API_BASE_URL}/statistics`, { params: { brandId } });
-      return response.data;
+      return response.data.data;
     } catch (error) {
       console.error('获取内容统计信息失败:', error);
       throw error;

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3000/api/evolution';
+const API_BASE_URL = '/api/evolution';
 
 interface Strategy {
   id: string;
@@ -70,27 +70,27 @@ export const EvolutionService = {
     if (strategyType) params.append('strategyType', strategyType);
     
     const response = await axios.get(`${API_BASE_URL}/strategies`, { params });
-    return response.data;
+    return response.data.data;
   },
 
   async getStrategyById(id: string): Promise<Strategy> {
     const response = await axios.get(`${API_BASE_URL}/strategies/${id}`);
-    return response.data;
+    return response.data.data;
   },
 
   async createStrategy(dto: StrategyCreate): Promise<Strategy> {
     const response = await axios.post(`${API_BASE_URL}/strategies`, dto);
-    return response.data;
+    return response.data.data;
   },
 
   async updateStrategy(id: string, dto: StrategyUpdate): Promise<Strategy> {
     const response = await axios.put(`${API_BASE_URL}/strategies/${id}`, dto);
-    return response.data;
+    return response.data.data;
   },
 
   async deleteStrategy(id: string): Promise<{ success: boolean; message: string }> {
     const response = await axios.delete(`${API_BASE_URL}/strategies/${id}`);
-    return response.data;
+    return response.data.data;
   },
 
   async evolveStrategy(
@@ -102,7 +102,7 @@ export const EvolutionService = {
       mutationRate,
       crossoverRate,
     });
-    return response.data;
+    return response.data.data;
   },
 
   async evaluateStrategy(dto: EvaluateStrategy): Promise<{
@@ -110,7 +110,7 @@ export const EvolutionService = {
     feedback: any;
   }> {
     const response = await axios.post(`${API_BASE_URL}/strategies/${dto.strategyId}/evaluate`, dto);
-    return response.data;
+    return response.data.data;
   },
 
   async getDashboard(brandId: string, timeRange?: string): Promise<DashboardData> {
@@ -118,7 +118,7 @@ export const EvolutionService = {
     if (timeRange) params.append('timeRange', timeRange);
     
     const response = await axios.get(`${API_BASE_URL}/dashboard?brandId=${brandId}`, { params });
-    return response.data;
+    return response.data.data;
   },
 
   async getCriticFeedback(strategyId?: string, queryId?: string): Promise<any[]> {
@@ -127,12 +127,12 @@ export const EvolutionService = {
     if (queryId) params.append('queryId', queryId);
     
     const response = await axios.get(`${API_BASE_URL}/critic/feedback`, { params });
-    return response.data;
+    return response.data.data;
   },
 
   async createCriticFeedback(dto: EvaluateStrategy): Promise<any> {
     const response = await axios.post(`${API_BASE_URL}/critic/feedback`, dto);
-    return response.data;
+    return response.data.data;
   },
 
   async getCriticStats(strategyId?: string, timeRange?: string): Promise<any> {
@@ -141,7 +141,7 @@ export const EvolutionService = {
     if (timeRange) params.append('timeRange', timeRange);
 
     const response = await axios.get(`${API_BASE_URL}/critic/stats`, { params });
-    return response.data;
+    return response.data.data;
   },
 
   async getArchiveData(brandId: string, dimension1?: string, dimension2?: string): Promise<any> {
@@ -151,11 +151,11 @@ export const EvolutionService = {
     if (dimension2) params.append('dimension2', dimension2);
 
     const response = await axios.get(`${API_BASE_URL}/archive`, { params });
-    return response.data;
+    return response.data.data;
   },
 
   async getArchiveStatistics(brandId: string): Promise<any> {
     const response = await axios.get(`${API_BASE_URL}/archive/statistics?brandId=${brandId}`);
-    return response.data;
+    return response.data.data;
   },
 };
