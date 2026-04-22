@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 import { PerceptionModule } from './modules/perception/perception.module';
 import { EvolutionModule } from './modules/evolution/evolution.module';
 import { GenerationModule } from './modules/generation/generation.module';
@@ -45,7 +47,7 @@ import {
     ComplianceModule,
     CommonModule,
   ],
-  controllers: [],
-  providers: [],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}
