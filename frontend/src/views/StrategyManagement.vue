@@ -55,7 +55,7 @@
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
             <el-tag :type="getStatusTag(row.status)">
-              {{ row.status }}
+              {{ getStatusLabel(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -86,16 +86,29 @@
     <el-dialog
       v-model="addDialogVisible"
       title="添加策略"
-      width="600px"
+      width="800px"
     >
       <el-form :model="addForm" label-width="100px">
         <el-form-item label="策略类型">
-          <el-select v-model="addForm.strategyType" placeholder="选择策略类型">
+          <el-select v-model="addForm.strategyType" placeholder="选择策略类型" @change="handleStrategyTypeChangeInDialog">
             <el-option label="内容优化" value="content_optimization" />
             <el-option label="平台适配" value="platform_adaptation" />
             <el-option label="时间优化" value="time_optimization" />
           </el-select>
         </el-form-item>
+        
+        <el-form-item label="模板选择">
+          <el-select v-model="selectedTemplate" placeholder="选择预设模板" @change="handleTemplateSelect">
+            <el-option label="请选择模板" value="" />
+            <el-option 
+              v-for="(template, index) in availableTemplates"
+              :key="index"
+              :label="template.name"
+              :value="index"
+            />
+          </el-select>
+        </el-form-item>
+        
         <el-form-item label="内容模板">
           <el-input
             v-model="addForm.contentTemplate"
@@ -103,13 +116,109 @@
             :rows="4"
             placeholder="输入策略内容模板"
           />
+          <div class="template-hint" v-if="selectedTemplate !== '' && availableTemplates[Number(selectedTemplate)]">
+            <el-tag size="small" type="info">模板提示</el-tag>
+            <el-text size="small" type="info">{{ availableTemplates[Number(selectedTemplate)].hint }}</el-text>
+          </div>
         </el-form-item>
+        
         <el-form-item label="策略参数">
+          <div v-if="addForm.strategyType === 'content_optimization'">
+            <el-form :model="contentOptimizationParams" label-width="150px">
+              <el-form-item label="目标长度">
+                <el-input-number v-model="contentOptimizationParams.targetLength" :min="100" :max="2000" :step="50" />
+              </el-form-item>
+              <el-form-item label="包含关键词">
+                <el-switch v-model="contentOptimizationParams.includeKeywords" />
+              </el-form-item>
+              <el-form-item label="优化级别">
+                <el-select v-model="contentOptimizationParams.optimizationLevel">
+                  <el-option label="低" value="low" />
+                  <el-option label="中" value="medium" />
+                  <el-option label="高" value="high" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="优先关键词">
+                <el-tag
+                  v-for="(keyword, index) in contentOptimizationParams.priorityKeywords"
+                  :key="index"
+                  closable
+                  @close="contentOptimizationParams.priorityKeywords.splice(index, 1)"
+                >
+                  {{ keyword }}
+                </el-tag>
+                <el-input
+                  v-model="newKeyword"
+                  placeholder="输入关键词"
+                  @keyup.enter="addKeyword"
+                  style="width: 200px; margin-left: 10px"
+                />
+                <el-button type="primary" size="small" @click="addKeyword">添加</el-button>
+              </el-form-item>
+            </el-form>
+          </div>
+          
+          <div v-else-if="addForm.strategyType === 'platform_adaptation'">
+            <el-form :model="platformAdaptationParams" label-width="150px">
+              <el-form-item label="目标平台">
+                <el-checkbox-group v-model="platformAdaptationParams.platforms">
+                  <el-checkbox label="deepseek">DeepSeek</el-checkbox>
+                  <el-checkbox label="openai">OpenAI</el-checkbox>
+                  <el-checkbox label="kimi">Kimi</el-checkbox>
+                  <el-checkbox label="wenxin">文心一言</el-checkbox>
+                  <el-checkbox label="tongyi">通义千问</el-checkbox>
+                </el-checkbox-group>
+              </el-form-item>
+              <el-form-item label="适配级别">
+                <el-select v-model="platformAdaptationParams.adaptationLevel">
+                  <el-option label="低" value="low" />
+                  <el-option label="中" value="medium" />
+                  <el-option label="高" value="high" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="最大长度">
+                <el-input-number v-model="platformAdaptationParams.maxLength" :min="100" :max="2000" :step="50" />
+              </el-form-item>
+            </el-form>
+          </div>
+          
+          <div v-else-if="addForm.strategyType === 'time_optimization'">
+            <el-form :model="timeOptimizationParams" label-width="150px">
+              <el-form-item label="目标小时">
+                <el-checkbox-group v-model="timeOptimizationParams.targetHours">
+                  <el-checkbox v-for="hour in 24" :key="hour" :label="hour-1">{{ hour-1 }}:00</el-checkbox>
+                </el-checkbox-group>
+              </el-form-item>
+              <el-form-item label="时区">
+                <el-select v-model="timeOptimizationParams.timeZone">
+                  <el-option label="亚洲/上海" value="Asia/Shanghai" />
+                  <el-option label="美国/纽约" value="America/New_York" />
+                  <el-option label="欧洲/伦敦" value="Europe/London" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="工作日优先级">
+                <el-checkbox-group v-model="timeOptimizationParams.weekdayPriority">
+                  <el-checkbox label="1">周一</el-checkbox>
+                  <el-checkbox label="2">周二</el-checkbox>
+                  <el-checkbox label="3">周三</el-checkbox>
+                  <el-checkbox label="4">周四</el-checkbox>
+                  <el-checkbox label="5">周五</el-checkbox>
+                  <el-checkbox label="6">周六</el-checkbox>
+                  <el-checkbox label="0">周日</el-checkbox>
+                </el-checkbox-group>
+              </el-form-item>
+              <el-form-item label="最小间隔(小时)">
+                <el-input-number v-model="timeOptimizationParams.minInterval" :min="1" :max="24" :step="1" />
+              </el-form-item>
+            </el-form>
+          </div>
+          
           <el-input
             v-model="addForm.parametersJson"
             type="textarea"
             :rows="3"
             placeholder="输入策略参数（JSON格式）"
+            v-if="false"
           />
         </el-form-item>
       </el-form>
@@ -183,6 +292,71 @@ const addForm = ref({
   parametersJson: '{}',
 });
 
+const selectedTemplate = ref<number | string>('');
+const newKeyword = ref('');
+
+const contentOptimizationParams = ref({
+  targetLength: 500,
+  includeKeywords: true,
+  optimizationLevel: 'high',
+  priorityKeywords: [] as string[],
+  formatOptions: ['structured', 'bullet_points']
+});
+
+const platformAdaptationParams = ref({
+  platforms: ['deepseek', 'openai', 'kimi'],
+  adaptationLevel: 'medium',
+  maxLength: 800,
+  formatOptions: ['bullet_points', 'structured']
+});
+
+const timeOptimizationParams = ref({
+  targetHours: [9, 12, 18, 21],
+  timeZone: 'Asia/Shanghai',
+  weekdayPriority: [1, 2, 3, 4, 5],
+  minInterval: 4
+});
+
+const availableTemplates = [
+  {
+    name: '内容优化 - 基础模板',
+    type: 'content_optimization',
+    template: '针对{品牌名称}的内容优化策略，通过优化标题和摘要提高AI平台的提及率和排名',
+    params: {
+      targetLength: 500,
+      includeKeywords: true,
+      optimizationLevel: 'high',
+      priorityKeywords: ['AI副班', '智能教学', '教育科技'],
+      formatOptions: ['structured', 'bullet_points']
+    },
+    hint: '使用{品牌名称}占位符，系统会自动替换为实际品牌名称'
+  },
+  {
+    name: '平台适配 - 多平台模板',
+    type: 'platform_adaptation',
+    template: '根据{platform}平台特性调整{品牌名称}的内容格式和风格，提高平台推荐度',
+    params: {
+      platforms: ['deepseek', 'openai', 'kimi'],
+      adaptationLevel: 'medium',
+      maxLength: 800,
+      formatOptions: ['bullet_points', 'structured']
+    },
+    hint: '使用{platform}和{品牌名称}占位符'
+  },
+  {
+    name: '时间优化 - 最佳时段模板',
+    type: 'time_optimization',
+    template: '分析用户活跃时间，在最佳时段发布{品牌名称}相关内容，提高曝光率',
+    params: {
+      targetHours: [9, 12, 18, 21],
+      timeZone: 'Asia/Shanghai',
+      weekdayPriority: [1, 2, 3, 4, 5],
+      minInterval: 4
+    },
+    hint: '使用{品牌名称}占位符'
+  }
+];
+
 const evolveDialogVisible = ref(false);
 const evolveForm = ref({
   mutationRate: 0.1,
@@ -215,6 +389,15 @@ const getStatusTag = (status: string) => {
     'archived': 'danger',
   };
   return tags[status] || 'info';
+};
+
+const getStatusLabel = (status: string) => {
+  const labels: Record<string, string> = {
+    'active': '活跃',
+    'inactive': '未激活',
+    'archived': '已归档',
+  };
+  return labels[status] || status;
 };
 
 const getFitnessColor = (fitness: number) => {
@@ -256,18 +439,83 @@ const openAddDialog = () => {
     contentTemplate: '',
     parametersJson: '{}',
   };
+  selectedTemplate.value = '';
+  contentOptimizationParams.value = {
+    targetLength: 500,
+    includeKeywords: true,
+    optimizationLevel: 'high',
+    priorityKeywords: [],
+    formatOptions: ['structured', 'bullet_points']
+  };
+  platformAdaptationParams.value = {
+    platforms: ['deepseek', 'openai', 'kimi'],
+    adaptationLevel: 'medium',
+    maxLength: 800,
+    formatOptions: ['bullet_points', 'structured']
+  };
+  timeOptimizationParams.value = {
+    targetHours: [9, 12, 18, 21],
+    timeZone: 'Asia/Shanghai',
+    weekdayPriority: [1, 2, 3, 4, 5],
+    minInterval: 4
+  };
   addDialogVisible.value = true;
 };
 
+const handleStrategyTypeChangeInDialog = () => {
+  selectedTemplate.value = '';
+  addForm.value.contentTemplate = '';
+};
+
+const handleTemplateSelect = () => {
+  if (selectedTemplate.value !== '' && availableTemplates[Number(selectedTemplate.value)]) {
+    const template = availableTemplates[Number(selectedTemplate.value)];
+    addForm.value.strategyType = template.type;
+    addForm.value.contentTemplate = template.template;
+
+    if (template.type === 'content_optimization') {
+      contentOptimizationParams.value = { ...template.params } as typeof contentOptimizationParams.value;
+    } else if (template.type === 'platform_adaptation') {
+      platformAdaptationParams.value = { ...template.params } as typeof platformAdaptationParams.value;
+    } else if (template.type === 'time_optimization') {
+      timeOptimizationParams.value = { ...template.params } as typeof timeOptimizationParams.value;
+    }
+  }
+};
+
+const addKeyword = () => {
+  if (newKeyword.value.trim()) {
+    contentOptimizationParams.value.priorityKeywords.push(newKeyword.value.trim());
+    newKeyword.value = '';
+  }
+};
+
 const submitAddForm = async () => {
+  if (!addForm.value.strategyType) {
+    ElMessage.error('请选择策略类型');
+    return;
+  }
+  if (!addForm.value.contentTemplate) {
+    ElMessage.error('请输入内容模板');
+    return;
+  }
+  if (!selectedBrand.value) {
+    ElMessage.error('请选择品牌');
+    return;
+  }
+
   try {
     let parameters = {};
-    try {
-      parameters = JSON.parse(addForm.value.parametersJson);
-    } catch (e) {
-      ElMessage.error('参数格式错误，请输入有效的 JSON');
-      return;
+    
+    if (addForm.value.strategyType === 'content_optimization') {
+      parameters = contentOptimizationParams.value;
+    } else if (addForm.value.strategyType === 'platform_adaptation') {
+      parameters = platformAdaptationParams.value;
+    } else if (addForm.value.strategyType === 'time_optimization') {
+      parameters = timeOptimizationParams.value;
     }
+    
+    addForm.value.parametersJson = JSON.stringify(parameters);
 
     await EvolutionService.createStrategy({
       brandId: selectedBrand.value,
@@ -279,9 +527,10 @@ const submitAddForm = async () => {
     addDialogVisible.value = false;
     ElMessage.success('策略添加成功');
     loadStrategies();
-  } catch (error) {
+  } catch (error: any) {
     console.error('添加策略失败:', error);
-    ElMessage.error('添加策略失败');
+    const errorMessage = error.response?.data?.message || error.message || '添加策略失败';
+    ElMessage.error(`添加策略失败: ${errorMessage}`);
   }
 };
 
@@ -305,9 +554,10 @@ const submitEvolveForm = async () => {
     evolveDialogVisible.value = false;
     ElMessage.success('策略进化成功');
     loadStrategies();
-  } catch (error) {
+  } catch (error: any) {
     console.error('策略进化失败:', error);
-    ElMessage.error('策略进化失败');
+    const errorMessage = error.response?.data?.message || error.message || '策略进化失败';
+    ElMessage.error(`策略进化失败: ${errorMessage}`);
   }
 };
 
@@ -316,9 +566,10 @@ const handleDelete = async (strategyId: string) => {
     await EvolutionService.deleteStrategy(strategyId);
     ElMessage.success('策略删除成功');
     loadStrategies();
-  } catch (error) {
+  } catch (error: any) {
     console.error('删除策略失败:', error);
-    ElMessage.error('删除策略失败');
+    const errorMessage = error.response?.data?.message || error.message || '删除策略失败';
+    ElMessage.error(`删除策略失败: ${errorMessage}`);
   }
 };
 
@@ -386,5 +637,22 @@ watch(selectedBrand, (newValue) => {
   margin-top: 20px;
   display: flex;
   justify-content: flex-end;
+}
+
+.template-hint {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.el-checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.el-checkbox {
+  margin-right: 10px;
 }
 </style>

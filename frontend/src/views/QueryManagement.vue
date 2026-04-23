@@ -175,8 +175,9 @@ const handleAdd = async () => {
     showAddDialog.value = false
     addForm.value = { brandId: '', queryText: '', category: '通用', priority: 3 }
     await fetchQueries()
-  } catch (error) {
-    ElMessage.error('添加失败')
+  } catch (error: any) {
+    const errorMessage = error.response?.data?.message || error.message || '添加失败'
+    ElMessage.error(`添加失败: ${errorMessage}`)
   } finally {
     submitting.value = false
   }
@@ -188,9 +189,10 @@ const handleDelete = async (id: string) => {
     await perceptionApi.deleteQuery(id)
     ElMessage.success('删除成功')
     await fetchQueries()
-  } catch (error) {
+  } catch (error: any) {
     if (error !== 'cancel') {
-      ElMessage.error('删除失败')
+      const errorMessage = error.response?.data?.message || error.message || '删除失败'
+      ElMessage.error(`删除失败: ${errorMessage}`)
     }
   }
 }
@@ -217,8 +219,9 @@ const handleCheck = async () => {
     ElMessage.success(`检测完成: ${result.successCount}/${result.totalPlatforms} 成功, ${result.mentionedCount} 次提及`)
     showCheckDialog.value = false
     await fetchQueries()
-  } catch (error) {
-    ElMessage.error('检测失败')
+  } catch (error: any) {
+    const errorMessage = error.response?.data?.message || error.message || '检测失败'
+    ElMessage.error(`检测失败: ${errorMessage}`)
   } finally {
     checking.value = false
   }

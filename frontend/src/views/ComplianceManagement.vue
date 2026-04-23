@@ -187,6 +187,8 @@ const viewContent = async (id: string) => {
     const content = await GenerationService.getGeneratedContentById(id);
     // 这里可以打开内容详情对话框或跳转到详情页
     console.log('内容详情:', content);
+    ElMessage.success('内容详情已加载');
+    // 可以考虑添加一个详情对话框来显示内容
   } catch (error) {
     console.error('获取内容详情失败:', error);
     ElMessage.error('获取内容详情失败');

@@ -141,8 +141,8 @@ export class PerceptionService {
       where: { id: queryId },
       relations: ['brand'],
     });
-    if (!query) throw new NotFoundException('Query not found');
-    if (!query.brand) throw new NotFoundException('Brand not found for this query');
+    if (!query) throw new NotFoundException('查询不存在');
+    if (!query.brand) throw new NotFoundException('该查询的品牌不存在');
 
     const results = await this.aiPlatformService.queryMultiplePlatforms(
       platforms,
@@ -166,7 +166,7 @@ export class PerceptionService {
 
   async getCompetitorAnalysis(brandId: string, queryId?: string) {
     const brand = await this.brandRepo.findOne({ where: { id: brandId } });
-    if (!brand) throw new NotFoundException('Brand not found');
+    if (!brand) throw new NotFoundException('品牌不存在');
 
     const qb = this.visibilityRepo
       .createQueryBuilder('vr')
@@ -386,7 +386,7 @@ export class PerceptionService {
       relations: ['brand', 'visibilityRecords', 'visibilityRecords.platform'],
     });
 
-    if (!query) throw new NotFoundException('Query not found');
+    if (!query) throw new NotFoundException('查询不存在');
 
     return {
       id: query.id,
@@ -412,7 +412,7 @@ export class PerceptionService {
 
   async createQuery(dto: { brandId: string; queryText: string; category?: string; priority?: number }) {
     const brand = await this.brandRepo.findOne({ where: { id: dto.brandId } });
-    if (!brand) throw new NotFoundException('Brand not found');
+    if (!brand) throw new NotFoundException('品牌不存在');
 
     const query = this.queryRepo.create({
       brandId: dto.brandId,
@@ -427,7 +427,7 @@ export class PerceptionService {
 
   async updateQuery(id: string, dto: { queryText?: string; category?: string; priority?: number; isActive?: boolean }) {
     const query = await this.queryRepo.findOne({ where: { id } });
-    if (!query) throw new NotFoundException('Query not found');
+    if (!query) throw new NotFoundException('查询不存在');
 
     if (dto.queryText !== undefined) query.queryText = dto.queryText;
     if (dto.category !== undefined) query.category = dto.category;
@@ -439,9 +439,9 @@ export class PerceptionService {
 
   async deleteQuery(id: string) {
     const query = await this.queryRepo.findOne({ where: { id } });
-    if (!query) throw new NotFoundException('Query not found');
+    if (!query) throw new NotFoundException('查询不存在');
 
     await this.queryRepo.remove(query);
-    return { message: 'Query deleted successfully' };
+    return { message: '查询删除成功' };
   }
 }

@@ -2,7 +2,6 @@
   <div class="content-management">
     <h1 class="page-title">内容管理</h1>
 
-    <!-- 品牌选择 -->
     <div class="brand-selector">
       <el-select v-model="selectedBrand" placeholder="选择品牌" @change="loadContents">
         <el-option
@@ -14,22 +13,25 @@
       </el-select>
     </div>
 
-    <!-- 筛选条件 -->
     <div class="filter-container">
       <el-select v-model="filters.contentType" placeholder="内容类型" @change="loadContents">
         <el-option label="全部" value="" />
         <el-option label="文章" value="article" />
         <el-option label="社交媒体" value="social_media" />
         <el-option label="广告" value="advertisement" />
+        <el-option label="博客" value="blog" />
+        <el-option label="产品描述" value="product_description" />
+        <el-option label="邮件" value="email" />
         <el-option label="其他" value="other" />
       </el-select>
 
-      <el-select v-model="filters.platform" placeholder="平台" @change="loadContents">
+      <el-select v-model="filters.platform" placeholder="AI平台" @change="loadContents">
         <el-option label="全部" value="" />
-        <el-option label="微信" value="wechat" />
-        <el-option label="微博" value="weibo" />
-        <el-option label="抖音" value="douyin" />
-        <el-option label="小红书" value="xiaohongshu" />
+        <el-option label="DeepSeek" value="deepseek" />
+        <el-option label="ChatGPT" value="chatgpt" />
+        <el-option label="Kimi" value="kimi" />
+        <el-option label="文心一言" value="wenxin" />
+        <el-option label="通义千问" value="tongyi" />
       </el-select>
 
       <el-select v-model="filters.status" placeholder="状态" @change="loadContents">
@@ -40,14 +42,12 @@
       </el-select>
     </div>
 
-    <!-- 生成内容按钮 -->
     <div class="action-buttons">
       <el-button type="primary" @click="showGenerateDialog = true">
         <el-icon><Plus /></el-icon> 生成内容
       </el-button>
     </div>
 
-    <!-- 内容列表 -->
     <el-card shadow="hover" class="content-list-card">
       <template #header>
         <div class="card-header">
@@ -61,40 +61,44 @@
         </div>
       </template>
 
-      <el-table :data="contents" style="width: 100%" stripe>
+      <el-table :data="contents" style="width: 100%" stripe v-loading="loading">
         <el-table-column prop="contentTitle" label="标题" min-width="200" />
-        <el-table-column prop="contentType" label="类型" width="100" />
-        <el-table-column prop="platform" label="平台" width="100" />
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="contentType" label="类型" width="120">
           <template #default="scope">
-            <el-tag
-              :type="
-                scope.row.status === 'published' ? 'success' :
-                scope.row.status === 'generated' ? 'info' : 'warning'
-              "
-            >
-              {{ scope.row.status }}
+            <el-tag :type="getContentTypeTag(scope.row.contentType)">
+              {{ getContentTypeLabel(scope.row.contentType) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="feedbackScore" label="评分" width="80" />
-        <el-table-column prop="createdAt" label="创建时间" width="180" />
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column prop="platform" label="AI平台" width="100">
           <template #default="scope">
-            <el-button size="small" @click="viewContent(scope.row.id)">
-              查看
-            </el-button>
-            <el-button size="small" type="primary" @click="updateStatus(scope.row.id, 'published')" :disabled="scope.row.status === 'published'">
+            {{ getPlatformLabel(scope.row.platform) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="status" label="状态" width="100">
+          <template #default="scope">
+            <el-tag :type="getStatusTag(scope.row.status)">
+              {{ getStatusLabel(scope.row.status) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="createdAt" label="创建时间" width="180" />
+        <el-table-column label="操作" width="250" fixed="right">
+          <template #default="scope">
+            <el-button size="small" @click="viewContent(scope.row.id)">查看</el-button>
+            <el-button 
+              size="small" 
+              type="primary" 
+              @click="updateStatus(scope.row.id, 'published')" 
+              :disabled="scope.row.status === 'published'"
+            >
               发布
             </el-button>
-            <el-button size="small" type="danger" @click="deleteContent(scope.row.id)">
-              删除
-            </el-button>
+            <el-button size="small" type="danger" @click="deleteContent(scope.row.id)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
 
-      <!-- 分页 -->
       <div class="pagination">
         <el-pagination
           v-model:current-page="currentPage"
@@ -108,68 +112,80 @@
       </div>
     </el-card>
 
-    <!-- 生成内容对话框 -->
-    <el-dialog
-      v-model="showGenerateDialog"
-      title="生成内容"
-      width="500px"
-    >
+    <el-dialog v-model="showGenerateDialog" title="生成内容" width="600px">
       <el-form :model="generateForm" label-width="100px">
-        <el-form-item label="策略">
+        <el-form-item label="策略" required>
           <el-select v-model="generateForm.strategyId" placeholder="选择策略">
             <el-option
               v-for="strategy in strategies"
               :key="strategy.id"
-              :label="strategy.strategyType"
+              :label="getStrategyLabel(strategy)"
               :value="strategy.id"
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="内容类型">
+        
+        <el-form-item label="内容类型" required>
           <el-select v-model="generateForm.contentType" placeholder="选择内容类型">
             <el-option label="文章" value="article" />
             <el-option label="社交媒体" value="social_media" />
             <el-option label="广告" value="advertisement" />
-            <el-option label="其他" value="other" />
+            <el-option label="博客" value="blog" />
+            <el-option label="产品描述" value="product_description" />
+            <el-option label="邮件" value="email" />
           </el-select>
         </el-form-item>
-        <el-form-item label="平台">
-          <el-select v-model="generateForm.platform" placeholder="选择平台">
-            <el-option label="微信" value="wechat" />
-            <el-option label="微博" value="weibo" />
-            <el-option label="抖音" value="douyin" />
-            <el-option label="小红书" value="xiaohongshu" />
+        
+        <el-form-item label="AI平台" required>
+          <el-select v-model="generateForm.platform" placeholder="选择AI平台">
+            <el-option label="DeepSeek" value="deepseek" />
+            <el-option label="ChatGPT" value="chatgpt" />
+            <el-option label="Kimi" value="kimi" />
+            <el-option label="文心一言" value="wenxin" />
+            <el-option label="通义千问" value="tongyi" />
           </el-select>
+        </el-form-item>
+
+        <el-form-item label="内容长度">
+          <el-input :value="getContentLength(generateForm.contentType)" disabled />
+        </el-form-item>
+
+        <el-form-item label="提示词预览">
+          <el-input
+            :value="getPromptPreview(generateForm.contentType)"
+            type="textarea"
+            :rows="3"
+            disabled
+          />
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="showGenerateDialog = false">取消</el-button>
-          <el-button type="primary" @click="handleGenerate">生成</el-button>
+          <el-button type="primary" @click="handleGenerate" :loading="generating">生成</el-button>
         </span>
       </template>
     </el-dialog>
 
-    <!-- 内容详情对话框 -->
-    <el-dialog
-      v-model="showContentDialog"
-      title="内容详情"
-      width="800px"
-    >
+    <el-dialog v-model="showContentDialog" title="内容详情" width="800px">
       <div v-if="currentContent" class="content-detail">
         <h2>{{ currentContent.contentTitle }}</h2>
         <div class="content-meta">
-          <span>类型: {{ currentContent.contentType }}</span>
-          <span>平台: {{ currentContent.platform }}</span>
-          <span>状态: {{ currentContent.status }}</span>
-          <span>创建时间: {{ currentContent.createdAt }}</span>
+          <el-tag>{{ getContentTypeLabel(currentContent.contentType) }}</el-tag>
+          <el-tag type="success">{{ getPlatformLabel(currentContent.platform) }}</el-tag>
+          <el-tag :type="currentContent.status === 'published' ? 'success' : 'info'">
+            {{ getStatusLabel(currentContent.status) }}
+          </el-tag>
+          <span class="create-time">创建时间: {{ currentContent.createdAt }}</span>
         </div>
+        <el-divider />
         <div class="content-body">
           {{ currentContent.content }}
         </div>
       </div>
       <template #footer>
         <span class="dialog-footer">
+          <el-button @click="copyContent" type="primary">复制内容</el-button>
           <el-button @click="showContentDialog = false">关闭</el-button>
         </span>
       </template>
@@ -185,9 +201,10 @@ import { GenerationService } from '../api/generation';
 import { EvolutionService } from '../api/evolution';
 import { perceptionApi } from '../api/perception';
 
-// 响应式数据
 const selectedBrand = ref('');
 const brands = ref<Array<{id: string; name: string}>>([]);
+const loading = ref(false);
+const generating = ref(false);
 
 const filters = ref({
   contentType: '',
@@ -201,24 +218,110 @@ const total = ref(0);
 const currentPage = ref(1);
 const pageSize = ref(10);
 
-// 策略列表
 const strategies = ref<any[]>([]);
 
-// 对话框状态
 const showGenerateDialog = ref(false);
 const showContentDialog = ref(false);
 
-// 生成内容表单
 const generateForm = ref({
   strategyId: '',
-  contentType: '',
-  platform: '',
+  contentType: 'article',
+  platform: 'deepseek',
 });
 
-// 当前查看的内容
 const currentContent = ref<any>(null);
 
-// 加载品牌
+const contentTypeInfo: Record<string, { label: string; length: string; prompt: string }> = {
+  article: {
+    label: '文章',
+    length: '800-1000字',
+    prompt: '请为品牌撰写一篇专业的文章内容包括品牌定位、核心优势和市场竞争分析',
+  },
+  social_media: {
+    label: '社交媒体',
+    length: '100-200字',
+    prompt: '请撰写一条适合社交媒体平台的推广文案，突出品牌特色',
+  },
+  advertisement: {
+    label: '广告',
+    length: '50-100字',
+    prompt: '请撰写一段吸引人的广告文案，突出品牌价值和产品特点',
+  },
+  blog: {
+    label: '博客',
+    length: '600-800字',
+    prompt: '请撰写一篇博客文章，分享品牌相关的专业知识或行业洞察',
+  },
+  product_description: {
+    label: '产品描述',
+    length: '200-400字',
+    prompt: '请撰写一段产品描述，突出产品功能特性和使用场景',
+  },
+  email: {
+    label: '邮件',
+    length: '300-500字',
+    prompt: '请撰写一封品牌推广邮件，包含开场白、产品介绍和号召行动',
+  },
+};
+
+const platformLabels: Record<string, string> = {
+  deepseek: 'DeepSeek',
+  chatgpt: 'ChatGPT',
+  kimi: 'Kimi',
+  wenxin: '文心一言',
+  tongyi: '通义千问',
+};
+
+const getContentLength = (contentType: string) => {
+  return contentTypeInfo[contentType]?.length || '';
+};
+
+const getPromptPreview = (contentType: string) => {
+  return contentTypeInfo[contentType]?.prompt || '';
+};
+
+const getContentTypeTag = (type: string) => {
+  const tags: Record<string, string> = {
+    article: '',
+    social_media: 'success',
+    advertisement: 'warning',
+    blog: 'info',
+    product_description: 'danger',
+    email: '',
+  };
+  return tags[type] || 'info';
+};
+
+const getContentTypeLabel = (type: string) => {
+  return contentTypeInfo[type]?.label || type;
+};
+
+const getPlatformLabel = (platform: string) => {
+  return platformLabels[platform] || platform;
+};
+
+const getStatusTag = (status: string) => {
+  const tags: Record<string, string> = {
+    generated: 'info',
+    published: 'success',
+    archived: 'warning',
+  };
+  return tags[status] || 'info';
+};
+
+const getStatusLabel = (status: string) => {
+  const labels: Record<string, string> = {
+    generated: '已生成',
+    published: '已发布',
+    archived: '已归档',
+  };
+  return labels[status] || status;
+};
+
+const getStrategyLabel = (strategy: any) => {
+  return strategy.contentTemplate?.substring(0, 50) + (strategy.contentTemplate?.length > 50 ? '...' : '');
+};
+
 const loadBrands = async () => {
   try {
     const data = await perceptionApi.getBrands();
@@ -231,22 +334,21 @@ const loadBrands = async () => {
   }
 };
 
-// 加载策略列表
 const loadStrategies = async () => {
   if (!selectedBrand.value) return;
 
   try {
     const data = await EvolutionService.getStrategies(selectedBrand.value);
-    strategies.value = data;
+    strategies.value = data || [];
   } catch (error) {
     console.error('加载策略失败:', error);
   }
 };
 
-// 加载内容列表
 const loadContents = async () => {
   if (!selectedBrand.value) return;
 
+  loading.value = true;
   try {
     const data = await GenerationService.getGeneratedContents({
       brandId: selectedBrand.value,
@@ -257,8 +359,9 @@ const loadContents = async () => {
 
     let filteredData = data || [];
     if (searchKeyword.value) {
+      const keyword = searchKeyword.value.toLowerCase();
       filteredData = filteredData.filter((item: any) =>
-        item.contentTitle?.includes(searchKeyword.value)
+        item.contentTitle?.toLowerCase().includes(keyword)
       );
     }
 
@@ -268,28 +371,43 @@ const loadContents = async () => {
     contents.value = filteredData.slice(start, end);
   } catch (error) {
     console.error('加载内容列表失败:', error);
+  } finally {
+    loading.value = false;
   }
 };
 
-// 处理分页大小变化
 const handleSizeChange = (size: number) => {
   pageSize.value = size;
   loadContents();
 };
 
-// 处理当前页变化
 const handleCurrentChange = (current: number) => {
   currentPage.value = current;
   loadContents();
 };
 
-// 生成内容
 const handleGenerate = async () => {
-  if (!selectedBrand.value || !generateForm.value.strategyId || !generateForm.value.contentType || !generateForm.value.platform) {
-    ElMessage.error('请填写完整的生成信息');
+  if (!selectedBrand.value) {
+    ElMessage.error('请先选择品牌');
     return;
   }
 
+  if (!generateForm.value.strategyId) {
+    ElMessage.error('请选择策略');
+    return;
+  }
+
+  if (!generateForm.value.contentType) {
+    ElMessage.error('请选择内容类型');
+    return;
+  }
+
+  if (!generateForm.value.platform) {
+    ElMessage.error('请选择AI平台');
+    return;
+  }
+
+  generating.value = true;
   try {
     await GenerationService.generateContent({
       brandId: selectedBrand.value,
@@ -300,50 +418,63 @@ const handleGenerate = async () => {
 
     ElMessage.success('内容生成成功');
     showGenerateDialog.value = false;
-    loadContents();
-  } catch (error) {
+    await loadContents();
+  } catch (error: any) {
     console.error('生成内容失败:', error);
-    ElMessage.error('生成内容失败');
+    const errorMessage = error.response?.data?.message || error.message || '生成内容失败';
+    ElMessage.error(`生成内容失败: ${errorMessage}`);
+  } finally {
+    generating.value = false;
   }
 };
 
-// 查看内容详情
 const viewContent = async (id: string) => {
   try {
     const content = await GenerationService.getGeneratedContentById(id);
     currentContent.value = content;
     showContentDialog.value = true;
-  } catch (error) {
+  } catch (error: any) {
     console.error('获取内容详情失败:', error);
-    ElMessage.error('获取内容详情失败');
+    const errorMessage = error.response?.data?.message || error.message || '获取内容详情失败';
+    ElMessage.error(`获取内容详情失败: ${errorMessage}`);
   }
 };
 
-// 更新内容状态
+const copyContent = async () => {
+  if (currentContent.value?.content) {
+    try {
+      await navigator.clipboard.writeText(currentContent.value.content);
+      ElMessage.success('内容已复制到剪贴板');
+    } catch (error) {
+      ElMessage.error('复制失败');
+    }
+  }
+};
+
 const updateStatus = async (id: string, status: string) => {
   try {
     await GenerationService.updateContentStatus(id, status);
     ElMessage.success('状态更新成功');
     loadContents();
-  } catch (error) {
+  } catch (error: any) {
     console.error('更新状态失败:', error);
-    ElMessage.error('更新状态失败');
+    const errorMessage = error.response?.data?.message || error.message || '更新状态失败';
+    ElMessage.error(`更新状态失败: ${errorMessage}`);
   }
 };
 
-// 删除内容
 const deleteContent = async (id: string) => {
   try {
     await GenerationService.deleteGeneratedContent(id);
     ElMessage.success('内容删除成功');
     loadContents();
-  } catch (error) {
+  } catch (error: any) {
     console.error('删除内容失败:', error);
-    ElMessage.error('删除内容失败');
+    const errorMessage = error.response?.data?.message || error.message || '删除内容失败';
+    ElMessage.error(`删除内容失败: ${errorMessage}`);
   }
 };
 
-// 组件挂载时加载数据
 onMounted(async () => {
   await loadBrands();
   await loadStrategies();
@@ -407,17 +538,22 @@ onMounted(async () => {
 
 .content-meta {
   display: flex;
-  gap: 20px;
-  margin-bottom: 20px;
-  font-size: 14px;
-  color: #666;
+  gap: 10px;
+  align-items: center;
   flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.create-time {
+  color: #999;
+  font-size: 14px;
 }
 
 .content-body {
-  line-height: 1.6;
+  line-height: 1.8;
   color: #333;
   white-space: pre-wrap;
+  font-size: 15px;
 }
 
 .dialog-footer {
@@ -433,7 +569,7 @@ onMounted(async () => {
 
   .content-meta {
     flex-direction: column;
-    gap: 10px;
+    align-items: flex-start;
   }
 }
 </style>

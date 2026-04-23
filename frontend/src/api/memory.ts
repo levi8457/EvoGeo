@@ -84,6 +84,8 @@ export class MemoryService {
    * @returns 更新后的记忆条目
    */
   static async updateMemoryEntry(id: string, data: {
+    memoryType?: string;
+    memoryKey?: string;
     content?: string;
     metadata?: Record<string, any>;
     importance?: number;

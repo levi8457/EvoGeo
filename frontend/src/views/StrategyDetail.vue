@@ -108,9 +108,9 @@
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="editForm.status" placeholder="选择状态">
-            <el-option label="active" value="active" />
-            <el-option label="inactive" value="inactive" />
-            <el-option label="archived" value="archived" />
+            <el-option label="活跃" value="active" />
+            <el-option label="未激活" value="inactive" />
+            <el-option label="已归档" value="archived" />
           </el-select>
         </el-form-item>
       </el-form>
@@ -340,6 +340,7 @@ const submitEditForm = async () => {
     }
 
     await EvolutionService.updateStrategy(strategyId, {
+      strategyType: editForm.value.strategyType,
       contentTemplate: editForm.value.contentTemplate,
       parameters,
       status: editForm.value.status,

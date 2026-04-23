@@ -55,7 +55,11 @@
 
       <el-table :data="memoryEntries" style="width: 100%" stripe>
         <el-table-column prop="memoryKey" label="记忆键" min-width="200" />
-        <el-table-column prop="memoryType" label="类型" width="120" />
+        <el-table-column prop="memoryType" label="类型" width="120">
+          <template #default="scope">
+            {{ getMemoryTypeLabel(scope.row.memoryType) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="importance" label="重要性" width="100">
           <template #default="scope">
             <el-rate v-model="scope.row.importance" disabled />
@@ -138,7 +142,7 @@
       <div v-if="currentMemory" class="memory-detail">
         <h2>{{ currentMemory.memoryKey }}</h2>
         <div class="memory-meta">
-          <span>类型: {{ currentMemory.memoryType }}</span>
+          <span>类型: {{ getMemoryTypeLabel(currentMemory.memoryType) }}</span>
           <span>重要性: {{ currentMemory.importance }}/5</span>
           <span>访问次数: {{ currentMemory.accessCount }}</span>
           <span>创建时间: {{ currentMemory.createdAt }}</span>
@@ -182,6 +186,18 @@ const filters = ref({
   memoryType: '',
   importance: '' as string | number | '',
 });
+
+const memoryTypeLabels: Record<string, string> = {
+  brand_info: '品牌信息',
+  strategy_info: '策略信息',
+  content_info: '内容信息',
+  user_feedback: '用户反馈',
+  other: '其他',
+};
+
+const getMemoryTypeLabel = (type: string) => {
+  return memoryTypeLabels[type] || type;
+};
 
 const searchKeyword = ref('');
 const memoryEntries = ref<MemoryEntry[]>([]);
@@ -233,8 +249,9 @@ const loadMemoryEntries = async () => {
 
     let filteredData = data;
     if (searchKeyword.value) {
+      const keyword = searchKeyword.value.toLowerCase();
       filteredData = data.filter((item: MemoryEntry) =>
-        item.memoryKey?.includes(searchKeyword.value)
+        item.memoryKey?.toLowerCase().includes(keyword)
       );
     }
 
@@ -271,6 +288,8 @@ const saveMemory = async () => {
   try {
     if (editMode.value && currentMemoryId.value) {
       await MemoryService.updateMemoryEntry(currentMemoryId.value, {
+        memoryType: memoryForm.value.memoryType,
+        memoryKey: memoryForm.value.memoryKey,
         content: memoryForm.value.content,
         importance: memoryForm.value.importance,
       });

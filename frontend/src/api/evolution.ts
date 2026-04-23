@@ -24,6 +24,7 @@ interface StrategyCreate {
 }
 
 interface StrategyUpdate {
+  strategyType?: string;
   contentTemplate?: string;
   parameters?: Record<string, any>;
   status?: string;
