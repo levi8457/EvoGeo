@@ -5,19 +5,25 @@
         <div class="page-header-content">
           <h1>进化大屏</h1>
           <div class="header-actions">
-            <el-select v-model="selectedBrand" placeholder="选择品牌" @change="handleBrandChange">
-              <el-option
-                v-for="brand in brands"
-                :key="brand.id"
-                :label="brand.name"
-                :value="brand.id"
-              />
-            </el-select>
-            <el-select v-model="timeRange" placeholder="时间范围" @change="handleTimeRangeChange">
-              <el-option label="7天" value="7" />
-              <el-option label="30天" value="30" />
-              <el-option label="90天" value="90" />
-            </el-select>
+            <div class="filter-item">
+              <span class="filter-label">品牌</span>
+              <el-select v-model="selectedBrand" placeholder="选择品牌" @change="handleBrandChange">
+                <el-option
+                  v-for="brand in brands"
+                  :key="brand.id"
+                  :label="brand.name"
+                  :value="brand.id"
+                />
+              </el-select>
+            </div>
+            <div class="filter-item">
+              <span class="filter-label">时间</span>
+              <el-select v-model="timeRange" placeholder="时间范围" @change="handleTimeRangeChange">
+                <el-option label="7天" value="7" />
+                <el-option label="30天" value="30" />
+                <el-option label="90天" value="90" />
+              </el-select>
+            </div>
             <el-button type="primary" @click="refreshData">
               <el-icon><Refresh /></el-icon>
               刷新数据
@@ -435,6 +441,18 @@ watch(selectedBrand, (newValue) => {
   display: flex;
   gap: 10px;
   align-items: center;
+}
+
+.filter-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-label {
+  font-size: 14px;
+  color: #606266;
+  white-space: nowrap;
 }
 
 .card-header {

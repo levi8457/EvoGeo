@@ -5,20 +5,26 @@
         <div class="page-header-content">
           <h1>策略管理</h1>
           <div class="header-actions">
-            <el-select v-model="selectedBrand" placeholder="选择品牌" @change="handleBrandChange">
-              <el-option
-                v-for="brand in brands"
-                :key="brand.id"
-                :label="brand.name"
-                :value="brand.id"
-              />
-            </el-select>
-            <el-select v-model="strategyType" placeholder="策略类型" @change="handleStrategyTypeChange">
-              <el-option label="所有类型" value="" />
-              <el-option label="内容优化" value="content_optimization" />
-              <el-option label="平台适配" value="platform_adaptation" />
-              <el-option label="时间优化" value="time_optimization" />
-            </el-select>
+            <div class="filter-item">
+              <span class="filter-label">品牌</span>
+              <el-select v-model="selectedBrand" placeholder="选择品牌" @change="handleBrandChange">
+                <el-option
+                  v-for="brand in brands"
+                  :key="brand.id"
+                  :label="brand.name"
+                  :value="brand.id"
+                />
+              </el-select>
+            </div>
+            <div class="filter-item">
+              <span class="filter-label">策略类型</span>
+              <el-select v-model="strategyType" placeholder="策略类型" @change="handleStrategyTypeChange">
+                <el-option label="所有类型" value="" />
+                <el-option label="内容优化" value="content_optimization" />
+                <el-option label="平台适配" value="platform_adaptation" />
+                <el-option label="时间优化" value="time_optimization" />
+              </el-select>
+            </div>
             <el-button type="primary" @click="openAddDialog">
               <el-icon><Plus /></el-icon>
               添加策略
@@ -631,6 +637,18 @@ watch(selectedBrand, (newValue) => {
   display: flex;
   gap: 10px;
   align-items: center;
+}
+
+.filter-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-label {
+  font-size: 14px;
+  color: #606266;
+  white-space: nowrap;
 }
 
 .pagination {

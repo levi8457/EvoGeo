@@ -396,7 +396,20 @@ const openEvaluateDialog = () => {
 const submitEvaluateForm = async () => {
   const strategyId = route.params.id as string;
   if (!strategyId) return;
-  
+
+  if (!evaluateForm.value.queryId) {
+    ElMessage.error('请输入查询ID');
+    return;
+  }
+  if (evaluateForm.value.predictedScore <= 0 || evaluateForm.value.predictedScore > 100) {
+    ElMessage.error('预测分数必须在1-100之间');
+    return;
+  }
+  if (evaluateForm.value.actualScore <= 0 || evaluateForm.value.actualScore > 100) {
+    ElMessage.error('实际分数必须在1-100之间');
+    return;
+  }
+
   try {
     await EvolutionService.evaluateStrategy({
       strategyId,

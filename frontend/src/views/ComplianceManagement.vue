@@ -114,6 +114,36 @@
         </span>
       </template>
     </el-dialog>
+
+    <!-- 内容详情对话框 -->
+    <el-dialog
+      v-model="showContentDialog"
+      title="内容详情"
+      width="800px"
+    >
+      <div v-if="currentContent" class="content-detail">
+        <el-descriptions :column="2" border>
+          <el-descriptions-item label="标题" :span="2">{{ currentContent.contentTitle }}</el-descriptions-item>
+          <el-descriptions-item label="类型">{{ currentContent.contentType }}</el-descriptions-item>
+          <el-descriptions-item label="平台">{{ currentContent.platform }}</el-descriptions-item>
+          <el-descriptions-item label="品牌">{{ currentContent.brandName }}</el-descriptions-item>
+          <el-descriptions-item label="合规状态">
+            <el-tag :type="getComplianceStatusTagType(currentContent.complianceStatus)">
+              {{ currentContent.complianceStatus || '未检测' }}
+            </el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="创建时间">{{ currentContent.createdAt }}</el-descriptions-item>
+          <el-descriptions-item label="内容" :span="2">
+            <div class="content-text">{{ currentContent.contentText || currentContent.generatedContent }}</div>
+          </el-descriptions-item>
+        </el-descriptions>
+      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="showContentDialog = false">关闭</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -135,7 +165,9 @@ const pageSize = ref(10);
 
 // 对话框状态
 const showComplianceDialog = ref(false);
+const showContentDialog = ref(false);
 const currentContentId = ref('');
+const currentContent = ref<any>(null);
 const currentComplianceChecks = ref<any[]>([]);
 
 // 加载品牌
@@ -185,10 +217,8 @@ const handleCurrentChange = (current: number) => {
 const viewContent = async (id: string) => {
   try {
     const content = await GenerationService.getGeneratedContentById(id);
-    // 这里可以打开内容详情对话框或跳转到详情页
-    console.log('内容详情:', content);
-    ElMessage.success('内容详情已加载');
-    // 可以考虑添加一个详情对话框来显示内容
+    currentContent.value = content;
+    showContentDialog.value = true;
   } catch (error) {
     console.error('获取内容详情失败:', error);
     ElMessage.error('获取内容详情失败');
@@ -201,6 +231,7 @@ const runComplianceCheck = async (contentId: string) => {
     await ComplianceService.runComplianceCheck(contentId);
     ElMessage.success('合规检测已完成');
     await loadContents();
+    await viewComplianceResult(contentId);
   } catch (error) {
     console.error('执行合规检测失败:', error);
     ElMessage.error('执行合规检测失败');
@@ -374,5 +405,19 @@ onMounted(async () => {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+.content-detail {
+  padding: 10px;
+}
+
+.content-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 10px;
+  background: #f5f7fa;
+  border-radius: 4px;
 }
 </style>
