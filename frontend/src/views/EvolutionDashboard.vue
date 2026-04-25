@@ -238,32 +238,32 @@ const evolutionTrendOption = computed(() => {
       {
         name: '平均适应度',
         type: 'line',
-        stack: 'Total',
-        areaStyle: {},
         emphasis: {
           focus: 'series'
         },
-        data: data.map((item: any) => item.avgFitness)
+        data: data.map((item: any) => item.avgFitness),
+        smooth: true,
+        itemStyle: { color: '#5470c6' }
       },
       {
         name: '最高适应度',
         type: 'line',
-        stack: 'Total',
-        areaStyle: {},
         emphasis: {
           focus: 'series'
         },
-        data: data.map((item: any) => item.maxFitness)
+        data: data.map((item: any) => item.maxFitness),
+        smooth: true,
+        itemStyle: { color: '#91cc75' }
       },
       {
         name: '最低适应度',
         type: 'line',
-        stack: 'Total',
-        areaStyle: {},
         emphasis: {
           focus: 'series'
         },
-        data: data.map((item: any) => item.minFitness)
+        data: data.map((item: any) => item.minFitness),
+        smooth: true,
+        itemStyle: { color: '#ee6666' }
       }
     ]
   };

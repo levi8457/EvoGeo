@@ -11,6 +11,52 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { MemoryService } from './memory.service';
+import { IsString, IsNotEmpty, IsOptional, IsNumber, Min, Max, Matches } from 'class-validator';
+
+class CreateMemoryDto {
+  @IsString()
+  @IsNotEmpty({ message: '品牌ID不能为空' })
+  brandId: string;
+
+  @IsString()
+  @IsNotEmpty({ message: '记忆类型不能为空' })
+  memoryType: string;
+
+  @IsString()
+  @IsNotEmpty({ message: '记忆键不能为空' })
+  @Matches(/\S/, { message: '记忆键不能为纯空格' })
+  memoryKey: string;
+
+  @IsString()
+  @IsNotEmpty({ message: '内容不能为空' })
+  @Matches(/\S/, { message: '内容不能为纯空格' })
+  content: string;
+
+  @IsOptional()
+  metadata?: Record<string, any>;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(10)
+  importance?: number;
+}
+
+class UpdateMemoryDto {
+  @IsOptional()
+  @IsString()
+  @Matches(/\S/, { message: '内容不能为纯空格' })
+  content?: string;
+
+  @IsOptional()
+  metadata?: Record<string, any>;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(10)
+  importance?: number;
+}
 
 @Controller('api/memory')
 export class MemoryController {
@@ -22,14 +68,7 @@ export class MemoryController {
    */
   @Post('entries')
   @HttpCode(HttpStatus.CREATED)
-  async createMemoryEntry(@Body() dto: {
-    brandId: string;
-    memoryType: string;
-    memoryKey: string;
-    content: string;
-    metadata?: Record<string, any>;
-    importance?: number;
-  }) {
+  async createMemoryEntry(@Body() dto: CreateMemoryDto) {
     return this.memoryService.createMemoryEntry(dto);
   }
 
@@ -74,11 +113,7 @@ export class MemoryController {
   @Put('entries/:id')
   async updateMemoryEntry(
     @Param('id') id: string,
-    @Body() dto: {
-      content?: string;
-      metadata?: Record<string, any>;
-      importance?: number;
-    },
+    @Body() dto: UpdateMemoryDto,
   ) {
     return this.memoryService.updateMemoryEntry(id, dto);
   }

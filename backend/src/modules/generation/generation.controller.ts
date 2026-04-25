@@ -3,6 +3,7 @@ import {
   Post,
   Get,
   Put,
+  Patch,
   Delete,
   Body,
   Query,
@@ -42,8 +43,9 @@ export class GenerationController {
     @Query('contentType') contentType?: string,
     @Query('platform') platform?: string,
     @Query('status') status?: string,
+    @Query('search') search?: string,
   ) {
-    return this.generationService.getGeneratedContents(brandId, contentType, platform, status);
+    return this.generationService.getGeneratedContents(brandId, contentType, platform, status, search);
   }
 
   /**
@@ -65,6 +67,15 @@ export class GenerationController {
     @Body('status') status: string,
   ) {
     return this.generationService.updateContentStatus(id, status);
+  }
+
+  /**
+   * 部署内容
+   * PATCH /api/generation/contents/:id/deploy
+   */
+  @Patch('contents/:id/deploy')
+  async deployContent(@Param('id') id: string) {
+    return this.generationService.deployContent(id);
   }
 
   /**

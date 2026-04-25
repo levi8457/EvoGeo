@@ -83,13 +83,29 @@
           </template>
         </el-table-column>
         <el-table-column prop="createdAt" label="创建时间" width="180" />
-        <el-table-column label="操作" width="250" fixed="right">
+        <el-table-column label="操作" width="300" fixed="right">
           <template #default="scope">
             <el-button size="small" @click="viewContent(scope.row.id)">查看</el-button>
-            <el-button 
-              size="small" 
-              type="primary" 
-              @click="updateStatus(scope.row.id, 'published')" 
+            <el-button
+              size="small"
+              type="success"
+              @click="deployContent(scope.row.id)"
+              :disabled="scope.row.deploymentStatus === 'deployed'"
+            >
+              部署
+            </el-button>
+            <el-button
+              size="small"
+              type="warning"
+              @click="archiveContent(scope.row.id)"
+              :disabled="scope.row.status === 'archived'"
+            >
+              归档
+            </el-button>
+            <el-button
+              size="small"
+              type="primary"
+              @click="updateStatus(scope.row.id, 'published')"
               :disabled="scope.row.status === 'published'"
             >
               发布
@@ -460,6 +476,30 @@ const updateStatus = async (id: string, status: string) => {
     console.error('更新状态失败:', error);
     const errorMessage = error.response?.data?.message || error.message || '更新状态失败';
     ElMessage.error(`更新状态失败: ${errorMessage}`);
+  }
+};
+
+const deployContent = async (id: string) => {
+  try {
+    await GenerationService.deployContent(id);
+    ElMessage.success('内容部署成功');
+    loadContents();
+  } catch (error: any) {
+    console.error('部署内容失败:', error);
+    const errorMessage = error.response?.data?.message || error.message || '部署内容失败';
+    ElMessage.error(`部署内容失败: ${errorMessage}`);
+  }
+};
+
+const archiveContent = async (id: string) => {
+  try {
+    await GenerationService.archiveContent(id);
+    ElMessage.success('内容归档成功');
+    loadContents();
+  } catch (error: any) {
+    console.error('归档内容失败:', error);
+    const errorMessage = error.response?.data?.message || error.message || '归档内容失败';
+    ElMessage.error(`归档内容失败: ${errorMessage}`);
   }
 };
 

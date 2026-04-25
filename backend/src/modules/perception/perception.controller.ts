@@ -2,35 +2,83 @@ import { Controller, Get, Post, Put, Delete, Query, Body, HttpException, HttpSta
 import { PerceptionService } from './perception.service';
 import { AiPlatformService } from './ai-platform.service';
 import { DashboardResponse } from './perception.types';
+import { IsString, IsNotEmpty, IsOptional, IsNumber, Min, Max, IsBoolean, Matches } from 'class-validator';
 
 class DashboardFiltersDto {
+  @IsOptional()
+  @IsString()
   brandId?: string;
+
+  @IsOptional()
+  @IsString()
   startDate?: string;
+
+  @IsOptional()
+  @IsString()
   endDate?: string;
+
+  @IsOptional()
   platforms?: string[];
 }
 
 class RunCheckDto {
+  @IsString()
+  @IsNotEmpty()
   queryId: string;
+
+  @IsString({ each: true })
   platforms: string[];
 }
 
 class ScanBrandDto {
+  @IsString()
+  @IsNotEmpty()
   brandName: string;
+
+  @IsString()
+  @IsNotEmpty()
   query: string;
 }
 
 class CreateQueryDto {
+  @IsString()
+  @IsNotEmpty({ message: '品牌ID不能为空' })
   brandId: string;
+
+  @IsString()
+  @IsNotEmpty({ message: '查询文本不能为空' })
+  @Matches(/\S/, { message: '查询文本不能为纯空格' })
   queryText: string;
+
+  @IsOptional()
+  @IsString()
   category?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(10)
   priority?: number;
 }
 
 class UpdateQueryDto {
+  @IsOptional()
+  @IsString()
+  @Matches(/\S/, { message: '查询文本不能为纯空格' })
   queryText?: string;
+
+  @IsOptional()
+  @IsString()
   category?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(10)
   priority?: number;
+
+  @IsOptional()
+  @IsBoolean()
   isActive?: boolean;
 }
 

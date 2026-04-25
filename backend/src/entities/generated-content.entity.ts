@@ -63,6 +63,12 @@ export class GeneratedContent {
   @Column({ name: 'deployed_at', type: 'datetime', nullable: true, comment: '部署时间' })
   deployedAt: Date;
 
+  @Column({ name: 'compliance_status', length: 20, nullable: true, comment: '合规状态（pending/passed/failed）' })
+  complianceStatus: string;
+
+  @Column({ name: 'last_checked_at', type: 'datetime', nullable: true, comment: '最后检测时间' })
+  lastCheckedAt: Date;
+
   @ManyToOne(() => Brand, (brand) => brand.generatedContents, {
     onDelete: 'CASCADE',
   })

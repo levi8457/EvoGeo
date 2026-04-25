@@ -42,6 +42,11 @@ export class ComplianceService {
       savedChecks.push(await this.complianceRepo.save(complianceCheck));
     }
 
+    const allPassed = checks.every(check => check.isCompliant);
+    content.complianceStatus = allPassed ? 'passed' : 'failed';
+    content.lastCheckedAt = new Date();
+    await this.contentRepo.save(content);
+
     return savedChecks;
   }
 

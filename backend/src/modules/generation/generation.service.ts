@@ -438,6 +438,7 @@ ${brandName}团队`,
     contentType?: string,
     platform?: string,
     status?: string,
+    search?: string,
   ) {
     try {
       const query = this.contentRepo.createQueryBuilder('content');
@@ -445,7 +446,7 @@ ${brandName}团队`,
       if (brandId) {
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
         if (uuidRegex.test(brandId)) {
-          query.where('content.brandId = :brandId', { brandId });
+          query.andWhere('content.brandId = :brandId', { brandId });
         }
       }
 
@@ -459,6 +460,13 @@ ${brandName}团队`,
 
       if (status) {
         query.andWhere('content.status = :status', { status });
+      }
+
+      if (search) {
+        query.andWhere(
+          '(LOWER(content.contentTitle) LIKE LOWER(:search) OR LOWER(content.content) LIKE LOWER(:search))',
+          { search: `%${search}%` }
+        );
       }
 
       query.orderBy('content.createdAt', 'DESC');
@@ -498,6 +506,25 @@ ${brandName}团队`,
       return await this.contentRepo.save(content);
     } catch (error) {
       this.logger.error('更新内容状态失败:', error);
+      throw error;
+    }
+  }
+
+  async deployContent(id: string) {
+    try {
+      const content = await this.contentRepo.findOne({ where: { id } });
+      if (!content) {
+        throw new NotFoundException('内容不存在');
+      }
+
+      content.deploymentStatus = 'deployed';
+      content.deployedAt = new Date();
+      content.status = 'published';
+      content.publishedAt = new Date();
+
+      return await this.contentRepo.save(content);
+    } catch (error) {
+      this.logger.error('部署内容失败:', error);
       throw error;
     }
   }

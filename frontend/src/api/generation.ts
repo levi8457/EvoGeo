@@ -91,6 +91,36 @@ export class GenerationService {
   }
 
   /**
+   * 部署内容
+   * @param id 内容ID
+   * @returns 部署后的内容
+   */
+  static async deployContent(id: string) {
+    try {
+      const response = await axios.patch(`${API_BASE_URL}/contents/${id}/deploy`);
+      return response.data.data;
+    } catch (error) {
+      console.error('部署内容失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 归档内容
+   * @param id 内容ID
+   * @returns 归档后的内容
+   */
+  static async archiveContent(id: string) {
+    try {
+      const response = await axios.put(`${API_BASE_URL}/contents/${id}/status`, { status: 'archived' });
+      return response.data.data;
+    } catch (error) {
+      console.error('归档内容失败:', error);
+      throw error;
+    }
+  }
+
+  /**
    * 获取内容统计信息
    * @param brandId 品牌ID
    * @returns 统计信息

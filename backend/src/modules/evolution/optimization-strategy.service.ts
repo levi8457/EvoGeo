@@ -21,7 +21,7 @@ export class OptimizationStrategyService {
     private brandRepo: Repository<Brand>,
   ) {}
 
-  async getStrategies(brandId?: string, strategyType?: string) {
+  async getStrategies(brandId?: string, strategyType?: string, page: number = 1, pageSize: number = 10) {
     const query = this.strategyRepo.createQueryBuilder('strategy');
 
     if (brandId) {
@@ -32,10 +32,21 @@ export class OptimizationStrategyService {
     }
 
     if (strategyType) {
-      query.where('strategy.strategyType = :strategyType', { strategyType });
+      query.andWhere('strategy.strategyType = :strategyType', { strategyType });
     }
 
-    return await query.getMany();
+    const [items, total] = await query
+      .skip((page - 1) * pageSize)
+      .take(pageSize)
+      .getManyAndCount();
+
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    };
   }
 
   async getStrategyById(id: string) {
@@ -86,12 +97,14 @@ export class OptimizationStrategyService {
   }
 
   async updateStrategy(id: string, dto: {
+    strategyType?: string;
     contentTemplate?: string;
     parameters?: Record<string, any>;
     status?: string;
   }) {
     const strategy = await this.getStrategyById(id);
 
+    if (dto.strategyType) strategy.strategyType = dto.strategyType;
     if (dto.contentTemplate) strategy.contentTemplate = dto.contentTemplate;
     if (dto.parameters) strategy.parameters = JSON.stringify(dto.parameters);
     if (dto.status) strategy.status = dto.status;

@@ -36,22 +36,47 @@ export class MemoryService {
         throw new NotFoundException('品牌不存在');
       }
 
+      const trimmedKey = dto.memoryKey.trim();
+      const trimmedContent = dto.content.trim();
+
+      if (!trimmedKey) {
+        throw new BadRequestException('记忆键不能为空或纯空格');
+      }
+      if (!trimmedContent) {
+        throw new BadRequestException('记忆内容不能为空或纯空格');
+      }
+
+      if (!/^\S+$/.test(trimmedKey)) {
+        throw new BadRequestException('记忆键不能包含空白字符');
+      }
+
       if (dto.importance && (dto.importance < 1 || dto.importance > 5)) {
         throw new BadRequestException('重要性级别必须在1-5之间');
+      }
+
+      const existingEntry = await this.memoryRepo.findOne({
+        where: {
+          brandId: dto.brandId,
+          memoryType: dto.memoryType,
+          memoryKey: trimmedKey,
+        },
+      });
+
+      if (existingEntry) {
+        throw new BadRequestException('相同品牌、记忆类型和键的记忆条目已存在');
       }
 
       const memoryEntry = this.memoryRepo.create({
         brandId: dto.brandId,
         memoryType: dto.memoryType,
-        memoryKey: dto.memoryKey,
-        content: dto.content,
+        memoryKey: trimmedKey,
+        content: trimmedContent,
         metadata: JSON.stringify(dto.metadata || {}),
         importance: dto.importance || 1,
       });
 
       const savedEntry = await this.memoryRepo.save(memoryEntry);
 
-      // 同步到ChromaDB
       await this.chromaDbService.addDocument('memory_entries', savedEntry.id, savedEntry.content, {
         brandId: savedEntry.brandId,
         memoryType: savedEntry.memoryType,
@@ -163,7 +188,11 @@ export class MemoryService {
       }
 
       if (dto.content !== undefined) {
-        memoryEntry.content = dto.content;
+        const trimmedContent = dto.content.trim();
+        if (!trimmedContent) {
+          throw new BadRequestException('记忆内容不能为空或纯空格');
+        }
+        memoryEntry.content = trimmedContent;
       }
       if (dto.metadata !== undefined) {
         memoryEntry.metadata = JSON.stringify(dto.metadata);
@@ -174,7 +203,6 @@ export class MemoryService {
 
       const updatedEntry = await this.memoryRepo.save(memoryEntry);
 
-      // 同步到ChromaDB
       await this.chromaDbService.updateDocument('memory_entries', updatedEntry.id, updatedEntry.content, {
         brandId: updatedEntry.brandId,
         memoryType: updatedEntry.memoryType,

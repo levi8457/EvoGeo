@@ -103,14 +103,14 @@
           </el-select>
         </el-form-item>
         
-        <el-form-item label="模板选择">
+        <el-form-item label="模板选择" v-if="addForm.strategyType">
           <el-select v-model="selectedTemplate" placeholder="选择预设模板" @change="handleTemplateSelect">
             <el-option label="请选择模板" value="" />
             <el-option 
-              v-for="(template, index) in availableTemplates"
+              v-for="(template, index) in filteredTemplates"
               :key="index"
               :label="template.name"
-              :value="index"
+              :value="template.originalIndex"
             />
           </el-select>
         </el-form-item>
@@ -251,6 +251,7 @@
             :step="0.01"
             show-input
           />
+          <span style="color: #999; font-size: 12px;">参数预留</span>
         </el-form-item>
         <el-form-item label="交叉率">
           <el-slider
@@ -260,6 +261,7 @@
             :step="0.01"
             show-input
           />
+          <span style="color: #999; font-size: 12px;">参数预留</span>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -273,7 +275,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { Plus } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
@@ -361,7 +363,12 @@ const availableTemplates = [
     },
     hint: '使用{品牌名称}占位符'
   }
-];
+].map((t, i) => ({ ...t, originalIndex: i }));
+
+const filteredTemplates = computed(() => {
+  if (!addForm.value.strategyType) return [];
+  return availableTemplates.filter(t => t.type === addForm.value.strategyType);
+});
 
 const evolveDialogVisible = ref(false);
 const evolveForm = ref({
@@ -478,7 +485,6 @@ const handleTemplateSelect = () => {
     const template = availableTemplates[Number(selectedTemplate.value)];
     addForm.value.strategyType = template.type;
     addForm.value.contentTemplate = template.template;
-
     if (template.type === 'content_optimization') {
       contentOptimizationParams.value = { ...template.params } as typeof contentOptimizationParams.value;
     } else if (template.type === 'platform_adaptation') {
@@ -559,6 +565,7 @@ const submitEvolveForm = async () => {
 
     evolveDialogVisible.value = false;
     ElMessage.success('策略进化成功');
+    ElMessage.warning('当前为模拟进化，真实算法开发中');
     loadStrategies();
   } catch (error: any) {
     console.error('策略进化失败:', error);

@@ -137,6 +137,7 @@
             :step="0.01"
             show-input
           />
+          <span style="color: #999; font-size: 12px;">参数预留</span>
         </el-form-item>
         <el-form-item label="交叉率">
           <el-slider
@@ -146,6 +147,7 @@
             :step="0.01"
             show-input
           />
+          <span style="color: #999; font-size: 12px;">参数预留</span>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -376,6 +378,7 @@ const submitEvolveForm = async () => {
 
     evolveDialogVisible.value = false;
     ElMessage.success('策略进化成功');
+    ElMessage.warning('当前为模拟进化，真实算法开发中');
     loadStrategy();
   } catch (error) {
     console.error('策略进化失败:', error);

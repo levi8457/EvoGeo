@@ -64,11 +64,21 @@ interface DashboardData {
   };
 }
 
+interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 export const EvolutionService = {
-  async getStrategies(brandId?: string, strategyType?: string): Promise<Strategy[]> {
+  async getStrategies(brandId?: string, strategyType?: string, page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<Strategy>> {
     const params = new URLSearchParams();
     if (brandId) params.append('brandId', brandId);
     if (strategyType) params.append('strategyType', strategyType);
+    params.append('page', page.toString());
+    params.append('pageSize', pageSize.toString());
     
     const response = await axios.get(`${API_BASE_URL}/strategies`, { params });
     return response.data.data;

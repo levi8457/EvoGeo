@@ -41,7 +41,12 @@
             <el-button size="small" @click="viewContent(scope.row.id)">
               查看
             </el-button>
-            <el-button size="small" type="primary" @click="runComplianceCheck(scope.row.id)">
+            <el-button
+              size="small"
+              type="primary"
+              @click="runComplianceCheck(scope.row.id)"
+              :loading="checkingContentId === scope.row.id"
+            >
               合规检测
             </el-button>
             <el-button size="small" @click="viewComplianceResult(scope.row.id)">
@@ -162,6 +167,7 @@ const contents = ref<any[]>([]);
 const total = ref(0);
 const currentPage = ref(1);
 const pageSize = ref(10);
+const checkingContentId = ref('');
 
 // 对话框状态
 const showComplianceDialog = ref(false);
@@ -228,12 +234,34 @@ const viewContent = async (id: string) => {
 // 执行合规检测
 const runComplianceCheck = async (contentId: string) => {
   try {
+    checkingContentId.value = contentId;
     await ComplianceService.runComplianceCheck(contentId);
     ElMessage.success('合规检测已完成');
-    await loadContents();
+
+    let pollCount = 0;
+    const maxPolls = 5;
+    const pollComplianceStatus = async () => {
+      if (pollCount >= maxPolls) {
+        checkingContentId.value = '';
+        return;
+      }
+      pollCount++;
+      const updatedContent = await GenerationService.getGeneratedContentById(contentId);
+      const index = contents.value.findIndex(c => c.id === contentId);
+      if (index !== -1) {
+        contents.value[index] = updatedContent;
+      }
+      if (updatedContent.complianceStatus === 'passed' || updatedContent.complianceStatus === 'failed') {
+        checkingContentId.value = '';
+        return;
+      }
+      setTimeout(pollComplianceStatus, 2000);
+    };
+    await pollComplianceStatus();
     await viewComplianceResult(contentId);
   } catch (error) {
     console.error('执行合规检测失败:', error);
+    checkingContentId.value = '';
     ElMessage.error('执行合规检测失败');
   }
 };

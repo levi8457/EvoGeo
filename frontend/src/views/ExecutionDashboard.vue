@@ -95,6 +95,41 @@
         </div>
       </el-card>
     </div>
+
+    <!-- 已部署内容列表 -->
+    <el-card shadow="hover" class="deployed-list-card">
+      <template #header>
+        <div class="card-header">
+          <span>已部署内容列表</span>
+          <el-tag type="success">{{ deployedContents.length }} 条</el-tag>
+        </div>
+      </template>
+      <el-table :data="deployedContents" stripe v-loading="loading">
+        <el-table-column prop="contentTitle" label="标题" min-width="200" />
+        <el-table-column prop="contentType" label="内容类型" width="120">
+          <template #default="scope">
+            <el-tag>{{ getContentTypeLabel(scope.row.contentType) }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="platform" label="平台" width="100">
+          <template #default="scope">
+            {{ getPlatformLabel(scope.row.platform) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="deployedAt" label="部署时间" width="180">
+          <template #default="scope">
+            {{ formatDate(scope.row.deployedAt) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="complianceStatus" label="合规状态" width="120">
+          <template #default="scope">
+            <el-tag :type="getComplianceTagType(scope.row.complianceStatus)">
+              {{ getComplianceStatusLabel(scope.row.complianceStatus) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-card>
   </div>
 </template>
 
@@ -112,6 +147,7 @@ import {
 import { CanvasRenderer } from 'echarts/renderers';
 import { ExecutionService } from '../api/execution';
 import { ComplianceService } from '../api/compliance';
+import { GenerationService } from '../api/generation';
 import { perceptionApi } from '../api/perception';
 
 // 注册必要的组件
@@ -129,6 +165,8 @@ use([
 // 响应式数据
 const selectedBrand = ref('');
 const brands = ref<Array<{id: string; name: string}>>([]);
+const loading = ref(false);
+const deployedContents = ref<any[]>([]);
 
 const deploymentStats = ref({
   total: 0,
@@ -167,6 +205,7 @@ const loadBrands = async () => {
 const loadDashboardData = async () => {
   if (!selectedBrand.value) return;
 
+  loading.value = true;
   try {
     // 获取部署统计信息
     const deploymentData = await ExecutionService.getDeploymentStatistics(selectedBrand.value);
@@ -175,8 +214,17 @@ const loadDashboardData = async () => {
     // 获取合规统计信息
     const complianceData = await ComplianceService.getComplianceStatistics(selectedBrand.value);
     complianceStats.value = complianceData;
+
+    // 获取已部署内容列表
+    const deployedData = await GenerationService.getGeneratedContents({
+      brandId: selectedBrand.value,
+      status: 'published',
+    });
+    deployedContents.value = deployedData.filter((c: any) => c.deploymentStatus === 'deployed');
   } catch (error) {
     console.error('加载大屏数据失败:', error);
+  } finally {
+    loading.value = false;
   }
 };
 
@@ -325,6 +373,53 @@ onMounted(async () => {
   await loadBrands();
   await loadDashboardData();
 });
+
+// 辅助函数
+const getContentTypeLabel = (type: string) => {
+  const labels: Record<string, string> = {
+    article: '文章',
+    social_media: '社交媒体',
+    advertisement: '广告',
+    blog: '博客',
+    product_description: '产品描述',
+    email: '邮件',
+  };
+  return labels[type] || type;
+};
+
+const getPlatformLabel = (platform: string) => {
+  const labels: Record<string, string> = {
+    deepseek: 'DeepSeek',
+    chatgpt: 'ChatGPT',
+    kimi: 'Kimi',
+    wenxin: '文心一言',
+    tongyi: '通义千问',
+  };
+  return labels[platform] || platform;
+};
+
+const formatDate = (date: string) => {
+  if (!date) return '-';
+  return new Date(date).toLocaleString('zh-CN');
+};
+
+const getComplianceTagType = (status: string) => {
+  switch (status) {
+    case 'passed': return 'success';
+    case 'failed': return 'danger';
+    case 'pending': return 'warning';
+    default: return 'info';
+  }
+};
+
+const getComplianceStatusLabel = (status: string) => {
+  const labels: Record<string, string> = {
+    passed: '通过',
+    failed: '不通过',
+    pending: '待检测',
+  };
+  return labels[status] || status || '未检测';
+};
 </script>
 
 <style scoped>
@@ -408,5 +503,9 @@ onMounted(async () => {
   .full-width {
     grid-column: 1;
   }
+}
+
+.deployed-list-card {
+  margin-top: 30px;
 }
 </style>

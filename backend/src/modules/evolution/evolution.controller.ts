@@ -1,19 +1,57 @@
 import { Controller, Get, Post, Put, Delete, Query, Body, Param, HttpException, HttpStatus } from '@nestjs/common';
 import { OptimizationStrategyService } from './optimization-strategy.service';
 import { CriticService } from './critic.service';
+import { IsString, IsNotEmpty, IsOptional, IsEnum, Matches } from 'class-validator';
+
+enum StrategyType {
+  PLATFORM = 'platform',
+  AUDIENCE = 'audience',
+  CONTENT = 'content',
+  TREND = 'trend',
+}
 
 class CreateStrategyDto {
+  @IsString()
+  @IsNotEmpty({ message: '品牌ID不能为空' })
   brandId: string;
+
+  @IsEnum(StrategyType, { message: '策略类型必须是有效的枚举值' })
+  @IsNotEmpty({ message: '策略类型不能为空' })
   strategyType: string;
+
+  @IsString()
+  @IsNotEmpty({ message: '内容模板不能为空' })
+  @Matches(/\S/, { message: '内容模板不能为纯空格' })
   contentTemplate: string;
+
+  @IsOptional()
   parameters?: Record<string, any>;
+
+  @IsOptional()
+  @IsString()
   archiveDimension1?: string;
+
+  @IsOptional()
+  @IsString()
   archiveDimension2?: string;
 }
 
 class UpdateStrategyDto {
+  @IsOptional()
+  @IsEnum(StrategyType, { message: '策略类型必须是有效的枚举值' })
+  strategyType?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty({ message: '内容模板不能为空' })
+  @Matches(/\S/, { message: '内容模板不能为纯空格' })
   contentTemplate?: string;
+
+  @IsOptional()
   parameters?: Record<string, any>;
+
+  @IsOptional()
+  @IsString()
   status?: string;
 }
 
@@ -43,8 +81,10 @@ export class EvolutionController {
   async getStrategies(
     @Query('brandId') brandId?: string,
     @Query('strategyType') strategyType?: string,
+    @Query('page') page: number = 1,
+    @Query('pageSize') pageSize: number = 10,
   ) {
-    return this.strategyService.getStrategies(brandId, strategyType);
+    return this.strategyService.getStrategies(brandId, strategyType, page, pageSize);
   }
 
   @Post('strategies')
